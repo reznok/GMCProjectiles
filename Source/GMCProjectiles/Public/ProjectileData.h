@@ -32,6 +32,9 @@ struct GMCPROJECTILES_API FGMCProjectileData
  UPROPERTY(EditAnywhere, BlueprintReadWrite)
  FTransform StartTransform{FTransform::Identity};
 
+ UPROPERTY(EditAnywhere, BlueprintReadWrite)
+ FVector StartVelocity{FVector::ZeroVector};
+
  // How long in seconds projectile is alive. 0 means infinite
  UPROPERTY(EditAnywhere, BlueprintReadWrite)
  float LifeTime{0};

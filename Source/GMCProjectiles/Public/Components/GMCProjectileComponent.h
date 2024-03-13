@@ -51,6 +51,9 @@ public:
 	// Get an increased DeltaTime step to catch up to the server state
 	// https://fish-networking.gitbook.io/docs/manual/guides/lag-compensation/projectiles
 	virtual float SmoothToServerStateStep(float DeltaTime);
+
+	UFUNCTION()
+	virtual void OnProjectileStopped(const FHitResult& ImpactResult);
 	
 protected:
 	// Called when the game starts

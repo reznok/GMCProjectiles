@@ -8,14 +8,9 @@
 #include "Kismet/GameplayStatics.h"
 
 
-// Sets default values for this component's properties
 UGMCProjectileComponent::UGMCProjectileComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
 
 void UGMCProjectileComponent::SetProjectileData(const FInstancedStruct& _ProjectileData)
@@ -28,12 +23,20 @@ void UGMCProjectileComponent::SetProjectileData(const FInstancedStruct& _Project
 	}
 	
 	ProjectileData = Data.Get<FGMCProjectileData>();
+
+	// Fix for standalone time
+	if (GetNetMode() == NM_Standalone)
+	{
+		ProjectileData.StartTime = GetTime();
+	}
 	
 	InitializeProjectile();
 }
 
 void UGMCProjectileComponent::InitializeProjectile()
 {
+	OnProjectileStop.AddUniqueDynamic(this, &UGMCProjectileComponent::OnProjectileStopped);
+		
 	GetOwner()->SetActorTransform(ProjectileData.StartTransform);
 	if (ProjectileData.LifeTime > 0)
 	{
@@ -43,7 +46,6 @@ void UGMCProjectileComponent::InitializeProjectile()
 	
 	TimeBehind = GetTime() - ProjectileData.StartTime;
 	InitializeRouter();
-	// UE_LOG(LogTemp, Warning, TEXT("Server: %hhd | LocalProjectileStartTime: %f"), GetOwner()->HasAuthority(), LocalProjectileStartTime);
 
 	if (InterpolationType == EInterpolationType::Snap)
 	{
@@ -58,8 +60,7 @@ void UGMCProjectileComponent::InitializeRouter()
 		case EProjectileType::Dumb:
 			{
 				const FGMCProjectileDataDumb DumbData = Data.Get<FGMCProjectileDataDumb>();
-				Velocity = GetOwner()->GetActorForwardVector() * DumbData.Speed;
-				// TickDumbProjectile(0);
+				Velocity = DumbData.StartVelocity + GetOwner()->GetActorForwardVector() * DumbData.Speed;
 				break;
 			}
 		case EProjectileType::Homing:
@@ -95,6 +96,11 @@ float UGMCProjectileComponent::SmoothToServerStateStep(float DeltaTime)
 	}
 
 	return Step;
+}
+
+void UGMCProjectileComponent::OnProjectileStopped(const FHitResult& ImpactResult)
+{
+	GetOwner()->Destroy();
 }
 
 // Called when the game starts
